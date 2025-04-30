@@ -1,12 +1,12 @@
 class Profile {
-  final String username;
-  final String gender;
-  final String birthday;
-  final String horoscope;
-  final String zodiac;
-  final int height;
-  final int weight;
-  final List<String> interests;
+  String username;
+  String gender;
+  String birthday;
+  String horoscope;
+  String zodiac;
+  int height;
+  int weight;
+  List<String> interests; // Pastikan ini bukan final
 
   Profile({
     required this.username,
@@ -19,14 +19,27 @@ class Profile {
     required this.interests,
   });
 
-  factory Profile.fromJson(Map<String, dynamic> json) => Profile(
-    username: json['username'] ?? '',
-    gender: json['gender'] ?? '',
-    birthday: json['birthday'] ?? '',
-    horoscope: json['horoscope'] ?? '',
-    zodiac: json['zodiac'] ?? '',
-    height: json['height'] ?? 0,
-    weight: json['weight'] ?? 0,
-    interests: List<String>.from(json['interests'] ?? []),
-  );
+  factory Profile.fromJson(Map<String, dynamic> json) {
+    return Profile(
+      username: json['username'] ?? '',
+      gender: json['gender'] ?? '',
+      birthday: json['birthday'] ?? '',
+      horoscope: json['horoscope'] ?? '',
+      zodiac: json['zodiac'] ?? '',
+      height: json['height'] ?? 0,
+      weight: json['weight'] ?? 0,
+      interests: List<String>.from(json['interests'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'username': username,
+    'gender': gender,
+    'birthday': birthday,
+    'horoscope': horoscope,
+    'zodiac': zodiac,
+    'height': height,
+    'weight': weight,
+    'interests': interests,
+  };
 }

@@ -1,3 +1,4 @@
+// edit_interest_page.dart
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,27 +23,35 @@ class _EditInterestPageState extends State<EditInterestPage> {
   }
 
   void _addInterest(String interest) {
-    if (interest.trim().isEmpty) return;
-    if (!_interests.contains(interest.trim())) {
-      setState(() {
-        _interests.add(interest.trim());
-      });
+    final trimmed = interest.trim();
+    if (trimmed.isEmpty) return;
+    if (!_interests.contains(trimmed)) {
+      setState(() => _interests.add(trimmed));
+      print("DEBUG: Added interest => $trimmed");
     }
     _controller.clear();
   }
 
   void _removeInterest(String interest) {
-    setState(() {
-      _interests.remove(interest);
-    });
+    setState(() => _interests.remove(interest));
+    print("DEBUG: Removed interest => $interest");
   }
 
   Future<void> _save() async {
+    if (_interests.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Interest list cannot be empty")),
+      );
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
-
     final url = Uri.parse('https://techtest.youapp.ai/api/updateProfile');
     final body = jsonEncode({'interests': _interests});
+
+    print("DEBUG: Sending token => $token");
+    print("DEBUG: Sending body  => $body");
 
     try {
       final response = await http.put(
@@ -51,14 +60,18 @@ class _EditInterestPageState extends State<EditInterestPage> {
         body: body,
       );
 
+      print("DEBUG: Status => ${response.statusCode}");
+      print("DEBUG: Response => ${response.body}");
+
       if (response.statusCode == 200) {
-        Navigator.of(context).pop(true); // success
+        Navigator.of(context).pop(_interests); // ← kembalikan List<String>
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to update interests")),
+          SnackBar(content: Text("Failed: ${response.statusCode}")),
         );
       }
     } catch (e) {
+      print("DEBUG: Error => $e");
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Error: $e")));
@@ -68,7 +81,6 @@ class _EditInterestPageState extends State<EditInterestPage> {
   @override
   Widget build(BuildContext context) {
     const bgColor = Color(0xFF0D1B2A);
-
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -104,17 +116,28 @@ class _EditInterestPageState extends State<EditInterestPage> {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _controller,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: "Type your interest...",
-                hintStyle: const TextStyle(color: Colors.white30),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: "Type your interest...",
+                      hintStyle: const TextStyle(color: Colors.white30),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onSubmitted: _addInterest,
+                  ),
                 ),
-              ),
-              onSubmitted: _addInterest,
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () => _addInterest(_controller.text),
+                  child: const Text("Add"),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -122,9 +145,9 @@ class _EditInterestPageState extends State<EditInterestPage> {
               children:
                   _interests
                       .map(
-                        (interest) => Chip(
-                          label: Text(interest),
-                          onDeleted: () => _removeInterest(interest),
+                        (i) => Chip(
+                          label: Text(i),
+                          onDeleted: () => _removeInterest(i),
                         ),
                       )
                       .toList(),
